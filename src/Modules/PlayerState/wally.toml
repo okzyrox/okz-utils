@@ -1,7 +1,8 @@
 [package]
-name = "okzyrox/okzyrox-utils"
-version = "0.1.0"
+name = "okzyrox/playerstate"
+version = "0.1.1"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
+authors = ["okzyrox"]
 
 [dependencies]

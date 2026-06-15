@@ -1,6 +1,6 @@
 {
-  "name": "okzyroxUtils",
+  "name": "okzyrox-utils",
   "tree": {
-    "$path": "src/Utils"
+    "$path": "src/Modules"
   }
 }
