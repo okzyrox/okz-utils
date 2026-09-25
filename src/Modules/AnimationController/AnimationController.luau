@@ -65,6 +65,9 @@ export type AnimationController = {
 	]]
 	GetTrack: (self: AnimationController, name: string) -> AnimationTrack?,
 
+	AdjustWeight: (self: AnimationController, name: string, weight: number) -> (),
+	AdjustSpeed: (self: AnimationController, name: string, speed: number) -> (),
+
 	--/ Player exclusive
 	Player: Player?,
 	Character: Model?,
@@ -183,7 +186,7 @@ function AnimationController.newObjectAnimator(animationFolder: Folder | ModuleS
 	local self = setmetatable({}, AnimationController)
 
 	self.Object = target
-	self.Animator = target:FindFirstChildWhichIsA("Animator")
+	self.Animator = target:FindFirstChildWhichIsA("Animator", true)
 	if not self.Animator then
 		error("No Animator found on target for AnimationController object animator! Animator must be a child of the target instance.")
 	end
@@ -191,20 +194,21 @@ function AnimationController.newObjectAnimator(animationFolder: Folder | ModuleS
 	self.Animations = {}
 	self.Tracks = {}
 	self.Connections = {}
-
-	if animationFolder:IsA("Folder") then
-		for _, anim in ipairs(animationFolder:GetChildren()) do
-			if anim:IsA("Animation") then
-				self.Animations[anim.Name] = anim
+	if typeof(animationFolder) == "Instance" then
+		if animationFolder:IsA("Folder") then
+			for _, anim in ipairs(animationFolder:GetChildren()) do
+				if anim:IsA("Animation") then
+					self.Animations[anim.Name] = anim
+				end
 			end
-		end
-	elseif animationFolder:IsA("ModuleScript") then
-		local anims = require(animationFolder) :: {[string]: string} --/ name: assetid
-		for name, animId in pairs(anims) do
-			local anim = Instance.new("Animation")
-			anim.Name = name
-			anim.AnimationId = `{animId}`
-			self.Animations[name] = anim
+		elseif animationFolder:IsA("ModuleScript") then
+			local anims = require(animationFolder) :: {[string]: string} --/ name: assetid
+			for name, animId in pairs(anims) do
+				local anim = Instance.new("Animation")
+				anim.Name = name
+				anim.AnimationId = `{animId}`
+				self.Animations[name] = anim
+			end
 		end
 	elseif type(animationFolder) == "table" then
 		for name, animId in pairs(animationFolder) do
@@ -214,7 +218,7 @@ function AnimationController.newObjectAnimator(animationFolder: Folder | ModuleS
 			self.Animations[name] = anim
 		end
 	else
-		error("Invalid animation folder type for AnimationController! Must be Folder, ModuleScript or name:assetid table")
+		error("Invalid animation folder type for AnimationController! Must be of AnimationStore")
 	end
 
 	return self 
@@ -304,6 +308,10 @@ function AnimationController:Play(name: string, properties: {[string]: any}?, sp
 
 	local track: AnimationTrack = self.Tracks[name]
 
+	if track.IsPlaying then
+		return
+	end
+
 	if properties then
 		for key, val in pairs(properties) do
 			pcall(function()
@@ -322,7 +330,8 @@ end
 function AnimationController:Stop(name: string, fadeTime: number?)
 	local track = self.Tracks[name]
 	if track and track.IsPlaying then
-		track:Stop(fadeTime or 0)
+		local fade = fadeTime ~= nil and fadeTime or 0
+		track:Stop(fade)
 	end
 end
 
@@ -338,6 +347,26 @@ end
 --- @return AnimationTrack? -- The AnimationTrack if found, else nil.
 function AnimationController:GetTrack(name: string): AnimationTrack?
 	return self.Tracks[name]
+end
+
+--- Adjust the weight of a specific animation loaded AnimationTrack
+--- @param name -- The name of the animation track to adjust.
+--- @param weight -- The new weight value to set for the animation track.
+function AnimationController:AdjustWeight(name: string, weight: number)
+	local track = self.Tracks[name]
+	if track then
+		track:AdjustWeight(weight)
+	end
+end
+
+--- Adjust the speed of a specific animation loaded AnimationTrack
+--- @param name -- The name of the animation track to adjust.
+--- @param speed -- The new speed value to set for the animation track.
+function AnimationController:AdjustSpeed(name: string, speed: number)
+	local track = self.Tracks[name]
+	if track then
+		track:AdjustSpeed(speed)
+	end
 end
 
 --- Destructor for the AnimationController, cleans everything up and disconnects events.

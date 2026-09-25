@@ -1,8 +1,8 @@
 [package]
-name = "okzyrox/animationcontroller"
-version = "0.1.2"
+name = "okzyrox/generalutils"
+version = "0.1.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-authors = ["okzyrox", "2016porthope"]
+authors = ["okzyrox"]
 
 [dependencies]

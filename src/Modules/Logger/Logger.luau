@@ -19,10 +19,12 @@ export type LoggerT = {
 	Info: (self: LoggerT, message: string, ...any) -> (),
 	Warn: (self: LoggerT, message: string, ...any) -> (),
 	Error: (self: LoggerT, message: string, ...any) -> (),
+	YieldError: (self: LoggerT, message: string, ...any) -> (),
 	Debug: (self: LoggerT, message: string, ...any) -> (),
 	Log: (self: LoggerT, message: string, ...any) -> (),
 	LogWarn: (self: LoggerT, message: string, ...any) -> (),
 	Assert: (self: LoggerT, expression: boolean, message: string, ...any) -> (),
+	YieldAssert: (self: LoggerT, expression: boolean, message: string, ...any) -> (),
 	State: (self: LoggerT, message: string, ...any) -> (),
 	StateWarn: (self: LoggerT, message: string, ...any) -> (),
 }
@@ -102,12 +104,31 @@ function Logger:Error(message: string, ...: any)
 	end
 end
 
+--- Log's under the "ERROR" level, and halts the current thread.
+--- Unlike `Logger:Error`, this will actually yield and error the current thread if called
+--- @param message -- The message to log.
+function Logger:YieldError(message: string, ...: any)
+	if self.LogLevel >= LevelsMap.Error then
+		warn(debug.traceback())
+		error(`[{self.Name}] [ERROR]: {tostring(message)}`, 2)
+	end
+end
+
 --- Check's the given expression, and log's as an "ERROR" if it does not pass.
 --- @param expression -- The expression to check. If this is falsy, the assertion will fail and an error message will be logged.
 --- @param message -- The message to log if the assertion fails.
 function Logger:Assert(expression: boolean, message: string, ...: any)
 	if not expression then
 		self:Error(message, ...)
+	end
+end
+
+--- Check's the given expression, and log's as an "ERROR" if it does not pass, and halts the current thread.
+--- @param expression -- The expression to check. If this is falsy, the assertion will fail and an error message will be logged.
+--- @param message -- The message to log if the assertion fails.
+function Logger:YieldAssert(expression: boolean, message: string, ...: any)
+	if not expression then
+		self:YieldError(message, ...)
 	end
 end
 
