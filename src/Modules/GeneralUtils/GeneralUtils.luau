@@ -40,6 +40,41 @@ function GeneralUtils:AssertTypes(typeMap: TypeMap): boolean
 	return result
 end
 
+--- Create a folder with a given name, either in the workspace or under a given parent instance.
+--- Unlike [GeneralUtils:UseFolder], this will create the folder and will not yield beforehand.
+--- Useful if the first context usage of the folder is the instance that it should be created in
+--- Otherwise, it will create duplicates.
+--- @param name -- The name of the folder to create.
+--- @param parent -- The parent instance to use for the folder. Defaults to workspace.
+--- @return Folder -- The resulting folder instance.
+function GeneralUtils:CreateFolder(name: string, parent: Instance?): Folder
+	local FolderParent = if parent then parent else workspace
+	if FolderParent:FindFirstChild(name) then
+		return FolderParent:FindFirstChild(name)
+	else
+		local folder = Instance.new("Folder")
+		folder.Name = name
+		folder.Parent = FolderParent
+		return folder
+	end
+end
+
+--- Recursively runs CreateFolder on a path, and returns them seperately.
+--- Warning: See [GeneralUtils:CreateFolder] for potential pitfalls.
+--- @param path -- The path of the folders to get or create, seperated by "/".
+--- @param parent -- The parent instance to use for the folders. Defaults to workspace.
+--- @return ...Folder -- The resulting folder instances, in order of the path.
+function GeneralUtils:CreateFoldersByPath(path: string, parent: Instance?): ...Folder
+	local folders = {}
+	local currentParent = parent or workspace
+	for folderName in path:gmatch("[^/]+") do
+		local folder = self:CreateFolder(folderName, currentParent)
+		table.insert(folders, folder)
+		currentParent = folder
+	end
+	return table.unpack(folders)
+end
+
 --- Get or create a folder with a given name, either in the workspace or under a given parent instance.
 --- **Yields** on the Client.
 --- @param name -- The name of the folder to get or create.
